@@ -1,0 +1,38 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="AppTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Class="glass-card mb-4" Style="background: rgba(18, 14, 41, 0.7) !important; backdrop-filter: blur(15px); border-radius: 0;">
+        <MudText Typo="Typo.h5" Class="ml-3 font-weight-bold" Color="Color.Primary">🎯 PromoHunter</MudText>
+        <MudSpacer />
+        <MudButton Href="/" Class="mx-2" Color="Color.Inherit">Dashboard</MudButton>
+        <MudButton Href="/produtos" Class="mx-2" Color="Color.Inherit">Produtos</MudButton>
+        <MudButton Href="/logs" Class="mx-2" Color="Color.Inherit">Logs</MudButton>
+    </MudAppBar>
+    
+    <MudMainContent Class="pt-16">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    MudTheme AppTheme = new MudTheme()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#7B61FF",
+            Secondary = "#E0C3FC",
+            Background = "transparent",
+            Surface = "rgba(30, 30, 47, 0.45)", 
+            AppbarBackground = "rgba(18, 14, 41, 0.7)",
+            TextPrimary = "#FFFFFF",
+            TextSecondary = "#A0A0B0"
+        }
+    };
+}

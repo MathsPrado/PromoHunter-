@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="PromoHunter.Api/PromoHunter.Api.csproj" />
+  <Project Path="PromoHunter.Application/PromoHunter.Application.csproj" />
+  <Project Path="PromoHunter.Domain/PromoHunter.Domain.csproj" />
+  <Project Path="PromoHunter.Infrastructure/PromoHunter.Infrastructure.csproj" />
+  <Project Path="PromoHunter.WebUI/PromoHunter.WebUI.csproj" />
+  <Project Path="PromoHunter.Worker/PromoHunter.Worker.csproj" />
+</Solution>

@@ -1,0 +1,102 @@
+@page "/produtos/{id:guid}"
+@inject HttpClient Http
+
+<MudButton Href="/produtos" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" Class="mb-4">Voltar</MudButton>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mx-auto mt-8 d-block" />
+}
+else if (produto == null)
+{
+    <MudText Color="Color.Error">Produto não encontrado.</MudText>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-6 glass-card mb-4" Elevation="0">
+                <MudText Typo="Typo.h5" Class="font-weight-bold mb-2">@produto.Nome</MudText>
+                <MudText Typo="Typo.body2" Class="mb-4" Style="word-break: break-all; opacity: 0.7;">
+                    <a href="@produto.Url" target="_blank" style="color: inherit">@produto.Url</a>
+                </MudText>
+                
+                <MudDivider Class="my-4" />
+                
+                <MudText Typo="Typo.subtitle1">Preço Alvo</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Secondary" Class="font-weight-bold">R$ @produto.PrecoAlvo.ToString("N2")</MudText>
+                
+                <MudText Typo="Typo.subtitle1" Class="mt-4">Status</MudText>
+                @if (produto.Ativo)
+                {
+                    <MudChip Color="Color.Success">Monitorando Ativamente</MudChip>
+                }
+                else
+                {
+                    <MudChip Color="Color.Default">Pausado</MudChip>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-6 glass-card" Elevation="0">
+                <MudText Typo="Typo.h6" Class="mb-4">Flutuação de Preços Histórica</MudText>
+                @if(chartSeries.Count > 0 && chartSeries[0].Data.Length > 0)
+                {
+                    <MudChart ChartType="ChartType.Line" ChartSeries="@chartSeries" XAxisLabels="@xAxisLabels" Width="100%" Height="350px" ChartOptions="options" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Ainda não há raspagem de dados coletados para este produto.</MudText>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private bool loading = true;
+    private ProdutoVM? produto;
+
+    private List<ChartSeries> chartSeries = new();
+    private string[] xAxisLabels = Array.Empty<string>();
+    private ChartOptions options = new ChartOptions();
+
+    public class ProdutoVM {
+        public Guid Id { get; set; }
+        public string Nome { get; set; } = "";
+        public string Url { get; set; } = "";
+        public decimal PrecoAlvo { get; set; }
+        public bool Ativo { get; set; }
+        public List<HistoricoVM> Historico { get; set; } = new();
+    }
+    public class HistoricoVM {
+        public decimal Preco { get; set; }
+        public DateTime DataVerificacao { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            produto = await Http.GetFromJsonAsync<ProdutoVM>($"/api/produtos/{Id}");
+            if (produto != null && produto.Historico.Count > 0)
+            {
+                var hists = produto.Historico.OrderBy(x => x.DataVerificacao).ToList();
+                double[] prices = hists.Select(x => (double)x.Preco).ToArray();
+                xAxisLabels = hists.Select(x => x.DataVerificacao.ToString("dd/MM HH:mm")).ToArray();
+                
+                chartSeries = new List<ChartSeries>()
+                {
+                    new ChartSeries() { Name = "Preço Real R$", Data = prices }
+                };
+
+                options.YAxisLines = true;
+                options.YAxisTicks = 5;
+            }
+        }
+        catch(Exception) { }
+        finally { loading = false; }
+    }
+}

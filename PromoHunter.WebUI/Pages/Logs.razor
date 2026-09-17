@@ -1,0 +1,60 @@
+@page "/logs"
+@inject HttpClient Http
+
+<MudText Typo="Typo.h3" Class="mb-6 font-weight-bold">Logs de Notificação (Telegram)</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mx-auto mt-8 d-block" />
+}
+else
+{
+    <MudTable Items="logs" Class="glass-card" Hover="true" Striped="false" Elevation="0">
+        <HeaderContent>
+            <MudTh>Status</MudTh>
+            <MudTh>Data/Hora</MudTh>
+            <MudTh>Mensagem / Preço</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Status">
+                @if(context.Sucesso)
+                {
+                     <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                }
+                else
+                {
+                     <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" />
+                }
+            </MudTd>
+            <MudTd DataLabel="Data/Hora">@context.DataEnvio.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</MudTd>
+            <MudTd DataLabel="Mensagem / Preço">
+                @if(context.Sucesso){
+                    <MudText>Sucesso ao disparar Webhook de mensagem. Preço detectado: R$ @context.PrecoMomento.ToString("N2")</MudText>
+                }else{
+                    <MudText Color="Color.Error">Erro: @context.ErroMensagem</MudText>
+                }
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private bool loading = true;
+    private List<NotificacaoVM> logs = new();
+
+    public class NotificacaoVM {
+        public Guid Id { get; set; }
+        public DateTime DataEnvio { get; set; }
+        public decimal PrecoMomento { get; set; }
+        public bool Sucesso { get; set; }
+        public string? ErroMensagem { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            logs = await Http.GetFromJsonAsync<List<NotificacaoVM>>("/api/logs") ?? new();
+        } catch(Exception) { }
+        finally { loading = false; }
+    }
+}

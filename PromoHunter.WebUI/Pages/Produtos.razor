@@ -1,0 +1,106 @@
+@page "/produtos"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudText Typo="Typo.h3" Class="mb-6 font-weight-bold">Gerenciamento de Produtos</MudText>
+
+<MudPaper Class="pa-4 glass-card mb-6 d-flex flex-wrap align-center gap-4">
+    <MudTextField @bind-Value="novoNome" Label="Nome do Produto" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 200px; max-width: 300px; flex: 1" />
+    <MudTextField @bind-Value="novaUrl" Label="URL" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width: 300px; flex: 2" />
+    <MudNumericField @bind-Value="novoAlvo" Label="Preço Alvo" Variant="Variant.Outlined" Margin="Margin.Dense" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" Style="width: 150px" />
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Adicionar" Disabled="adiLoading" Class="mt-1">Adicionar</MudButton>
+</MudPaper>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="mx-auto mt-8 d-block" />
+}
+else
+{
+    <MudTable Items="lista" Class="glass-card" Hover="true" Elevation="0">
+        <HeaderContent>
+            <MudTh>Nome / Link</MudTh>
+            <MudTh>Preço Alvo</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Ações</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nome">
+                <MudLink Href="@($"/produtos/{context.Id}")" Color="Color.Primary" Typo="Typo.subtitle1" Class="font-weight-bold">@context.Nome</MudLink>
+                <MudText Typo="Typo.caption" Class="d-block" Style="max-width:400px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color: rgba(255,255,255,0.5)">@context.Url</MudText>
+            </MudTd>
+            <MudTd DataLabel="Preço Alvo">
+                <MudChip Color="Color.Secondary" Size="Size.Small">R$ @context.PrecoAlvo.ToString("N2")</MudChip>
+            </MudTd>
+            <MudTd DataLabel="Status">
+                <MudSwitch T="bool" Value="@context.Ativo" ValueChanged="@((bool v) => ToggleAtivo(context.Id))" Color="Color.Success" />
+            </MudTd>
+            <MudTd DataLabel="Ações">
+                <MudIconButton Href="@($"/produtos/{context.Id}")" Icon="@Icons.Material.Filled.ShowChart" Color="Color.Info" Title="Estatísticas Analíticas" Variant="Variant.Outlined" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private bool loading = true;
+    private bool adiLoading = false;
+    private List<ProdutoVM> lista = new();
+
+    private string novoNome = "";
+    private string novaUrl = "";
+    private decimal novoAlvo;
+
+    public class ProdutoVM {
+        public Guid Id { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+        public decimal PrecoAlvo { get; set; }
+        public bool Ativo { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        lista = await Http.GetFromJsonAsync<List<ProdutoVM>>("/api/produtos") ?? new();
+        loading = false;
+    }
+
+    private async Task Adicionar()
+    {
+        if(string.IsNullOrWhiteSpace(novoNome) || novoAlvo <= 0) return;
+        adiLoading = true;
+        var r = await Http.PostAsJsonAsync("/api/produtos", new { Nome = novoNome, Url = novaUrl, PrecoAlvo = novoAlvo });
+        if (r.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Produto adicionado com sucesso!", Severity.Success);
+            novoNome = ""; novaUrl = ""; novoAlvo = 0;
+            await LoadData();
+        }
+        else
+        {
+            Snackbar.Add("Erro ao adicionar o produto.", Severity.Error);
+        }
+        adiLoading = false;
+    }
+
+    private async Task ToggleAtivo(Guid id)
+    {
+        try {
+            await Http.PostAsync($"/api/produtos/{id}/toggle", null);
+            var item = lista.FirstOrDefault(x => x.Id == id);
+            if (item != null)
+            {
+                item.Ativo = !item.Ativo; // update local ref
+                Snackbar.Add(item.Ativo ? "Monitoramento Ativado!" : "Monitoramento Desativado", Severity.Info);
+            }
+        } catch(Exception) {
+            Snackbar.Add("Erro na rede. Verifique a API.", Severity.Error);
+        }
+    }
+}

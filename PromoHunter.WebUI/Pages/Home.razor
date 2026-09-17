@@ -1,0 +1,75 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<MudText Typo="Typo.h3" Class="mb-6 font-weight-bold">Dashboard</MudText>
+
+@if (loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="d-block mx-auto mt-16" />
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-6 glass-card d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Produtos Monitorados</MudText>
+                    <MudText Typo="Typo.h3" Class="font-weight-bold mt-2">@totalProdutos</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.Inventory" Size="Size.Large" Color="Color.Primary" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-6 glass-card d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Notificações Sucesso</MudText>
+                    <MudText Typo="Typo.h3" Class="font-weight-bold mt-2" Style="color: #4CAF50">@notificacoesSucesso</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.MarkEmailRead" Size="Size.Large" Style="color: #4CAF50" />
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-6 glass-card d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Falhas de Bot</MudText>
+                    <MudText Typo="Typo.h3" Class="font-weight-bold mt-2 text-error">@notificacoesFalhas</MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.Error" Size="Size.Large" Color="Color.Error" />
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private bool loading = true;
+    private int totalProdutos;
+    private int notificacoesSucesso;
+    private int notificacoesFalhas;
+
+    public class ProdutoVM { public Guid Id { get; set; } }
+    public class NotificacaoVM { public Guid Id { get; set; } public bool Sucesso { get; set; } }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var p = await Http.GetFromJsonAsync<List<ProdutoVM>>("/api/produtos");
+            if (p != null) totalProdutos = p.Count;
+
+            var logs = await Http.GetFromJsonAsync<List<NotificacaoVM>>("/api/logs");
+            if (logs != null)
+            {
+                notificacoesSucesso = logs.Count(x => x.Sucesso);
+                notificacoesFalhas = logs.Count(x => !x.Sucesso);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

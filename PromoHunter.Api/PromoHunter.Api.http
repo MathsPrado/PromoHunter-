@@ -1,0 +1,6 @@
+@PromoHunter.Api_HostAddress = http://localhost:5190
+
+GET {{PromoHunter.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

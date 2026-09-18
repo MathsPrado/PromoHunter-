@@ -1,6 +1,6 @@
 # 🎯 PromoHunter
 
-Um sistema de monitoramento de preços assíncrono projetado em **.NET 9**, utilizando os melhores padrões de mercado focados em **Clean Architecture**, **Domain-Driven Design (DDD)** e **Mensageria com RabbitMQ**.
+Um sistema de monitoramento (em desenvolvimento) de preços assíncrono projetado em **.NET 9**, utilizando os melhores padrões de mercado focados em **Clean Architecture**, **Domain-Driven Design (DDD)** e **Mensageria com RabbitMQ**.
 
 ## 🚀 Arquitetura e Stack
 
